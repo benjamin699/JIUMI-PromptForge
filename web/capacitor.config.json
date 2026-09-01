@@ -1,0 +1,11 @@
+{
+  "appId": "com.jiumi.promptworkbench",
+  "appName": "JIUMI提示词工作台",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

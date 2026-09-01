@@ -1,0 +1,19 @@
+{
+  "name": "JIUMI 提示词工作台",
+  "short_name": "JIUMI",
+  "description": "巨构 / 武侠 / 千禧年提示词生成与 ComfyUI 出图",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

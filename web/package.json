@@ -1,0 +1,17 @@
+{
+  "name": "jiumi-prompt-workbench-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JIUMI 提示词工作台 · 独立 Android APK（WebView + Pyodide 本地引擎）",
+  "scripts": {
+    "sync": "cap sync",
+    "android": "cap add android",
+    "build:apk": "cap sync && cd android && gradlew assembleDebug"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "typescript": "^7.0.2"
+  }
+}

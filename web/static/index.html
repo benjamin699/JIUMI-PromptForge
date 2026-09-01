@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icon-512.png">
+<title>JIUMI 提示词工作台</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c2230; --line:#2a3240;
+  --fg:#e6edf3; --dim:#8b98a9; --acc:#d4a256; --acc2:#3fb6a8;
+  --danger:#e05c5c; --r:12px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:15px;overscroll-behavior-y:none}
+body{padding-bottom:calc(64px + var(--safe-b))}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#131922,#0e1116);
+  padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:17px;letter-spacing:1px;color:var(--acc);font-weight:600}
+header .sub{font-size:11px;color:var(--dim);margin-top:3px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--dim);
+  margin-right:5px;vertical-align:middle}
+.dot.on{background:var(--acc2);box-shadow:0 0 6px var(--acc2)}
+.dot.off{background:var(--danger)}
+
+main{padding:12px 14px 20px}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:3px;margin-bottom:12px;gap:3px}
+.seg button{flex:1;background:none;border:0;color:var(--dim);padding:9px 4px;border-radius:9px;
+  font-size:13px;font-family:inherit;transition:.15s}
+.seg button.on{background:var(--acc);color:#1a1206;font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:13px;color:var(--acc);font-weight:600;letter-spacing:.5px}
+label.f{display:block;margin-bottom:11px}
+label.f .lb{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+select,input[type=text],input[type=number],textarea{
+  width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--fg);
+  border-radius:9px;padding:10px 11px;font-size:15px;font-family:inherit;outline:none}
+select:focus,input:focus,textarea:focus{border-color:var(--acc)}
+textarea{min-height:88px;resize:vertical;line-height:1.5}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.btn{width:100%;background:var(--acc);color:#1a1206;border:0;border-radius:10px;
+  padding:13px;font-size:15px;font-weight:600;font-family:inherit;margin-top:4px}
+.btn:active{opacity:.8}
+.btn.sec{background:var(--panel2);color:var(--fg);border:1px solid var(--line);font-weight:500}
+.btn.sm{padding:9px;font-size:13px;width:auto;flex:1}
+.btn:disabled{opacity:.45}
+.out{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px;
+  font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  max-height:260px;overflow-y:auto;margin-bottom:8px}
+.out.en{font-size:12.5px;color:#a9b6c6;max-height:180px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.warn{background:#3a2a12;border:1px solid #6b4e1e;color:#e8c07a;border-radius:8px;
+  padding:8px 10px;font-size:12px;margin-bottom:8px;line-height:1.5}
+.err{background:#3a1616;border:1px solid #6b1e1e;color:#f0a0a0;border-radius:8px;
+  padding:8px 10px;font-size:12.5px;margin-bottom:8px;word-break:break-word}
+img.preview{width:100%;border-radius:9px;border:1px solid var(--line);display:block;margin-bottom:8px}
+.hint{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:6px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;
+  background:rgba(19,25,34,.97);border-top:1px solid var(--line);
+  padding-bottom:var(--safe-b);backdrop-filter:blur(10px)}
+nav button{flex:1;background:none;border:0;color:var(--dim);padding:11px 2px 9px;
+  font-size:11px;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button.on{color:var(--acc)}
+nav .ic{font-size:19px;line-height:1}
+.page{display:none}
+.page.on{display:block}
+.hist{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+  padding:10px;margin-bottom:9px}
+.hist .meta{font-size:11px;color:var(--dim);margin-bottom:5px;display:flex;
+  justify-content:space-between;align-items:center}
+.hist .txt{font-size:13px;line-height:1.55;color:var(--fg);max-height:4.7em;overflow:hidden}
+.hist .ops{display:flex;gap:6px;margin-top:8px}
+.badge{background:#233042;color:#8fb8d8;border-radius:5px;padding:1px 6px;font-size:10.5px;margin-right:5px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Pyodide 初始化遮罩 */
+#boot{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+#boot .t{font-size:16px;color:var(--acc);letter-spacing:1px}
+#boot .s{font-size:12px;color:var(--dim);max-width:280px;line-height:1.6}
+#boot.hide{display:none}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="spin" style="width:26px;height:26px;border-width:3px;border-top-color:var(--acc)"></div>
+  <div class="t">JIUMI 提示词工作台</div>
+  <div class="s" id="bootMsg">正在加载本地引擎（首次约需下载 10MB，离线后秒开）…</div>
+</div>
+
+<header>
+  <h1>JIUMI 提示词工作台</h1>
+  <div class="sub"><span id="comfyDot" class="dot"></span><span id="comfyTxt">未连接 ComfyUI</span></div>
+</header>
+
+<main>
+  <!-- ============ 生成 ============ -->
+  <section class="page on" id="page-gen">
+    <div class="seg" id="archSeg">
+      <button class="on" data-v="image">图片</button>
+      <button data-v="h3">H3 视频</button>
+    </div>
+    <div class="seg" id="styleSeg"></div>
+
+    <div class="card">
+      <h3>参数</h3>
+      <div id="fields"></div>
+    </div>
+
+    <button class="btn" id="btnGen">生成提示词</button>
+
+    <div id="genErr"></div>
+    <div id="genWarn"></div>
+
+    <div id="result" style="display:none">
+      <div class="card">
+        <h3>中文提示词</h3>
+        <div class="out" id="outZh"></div>
+        <div class="row">
+          <button class="btn sm sec" id="btnCopyZh">复制中文</button>
+          <button class="btn sm sec" id="btnSaveHist">存入历史</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>英文提示词（出图用）</h3>
+        <div class="out en" id="outEn"></div>
+        <button class="btn sec" id="btnCopyEn">复制英文</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 出图 ============ -->
+  <section class="page" id="page-render">
+    <div class="card">
+      <h3>推送到 ComfyUI</h3>
+      <textarea id="renderPrompt" placeholder="粘贴或沿用刚生成的英文提示词"></textarea>
+      <div class="row" style="margin-top:8px">
+        <input type="number" id="renderSeed" placeholder="随机种子（留空随机）">
+        <input type="number" id="renderTimeout" placeholder="超时 240" value="240">
+      </div>
+      <button class="btn" id="btnRender">开始出图</button>
+      <div class="hint">出图在电脑（ComfyUI）上完成。手机需与电脑同网，且 ComfyUI 启动需加
+        <code>--enable-cors-header</code> 参数（否则浏览器/WebView 会被 CORS 拦截）。</div>
+    </div>
+
+    <div id="renderErr"></div>
+    <div id="renderBox" style="display:none">
+      <div class="card">
+        <h3 id="renderStatus">处理中…</h3>
+        <div id="renderImg"></div>
+        <div class="row" id="renderOps" style="display:none">
+          <button class="btn sm sec" id="btnDl">打开图片</button>
+          <button class="btn sm sec" id="btnUsePrompt">用回该提示词</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 历史 ============ -->
+  <section class="page" id="page-hist">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn sm sec" id="btnRefreshHist">刷新</button>
+      <button class="btn sm sec" id="btnClearHist">清空全部</button>
+    </div>
+    <div id="histList"></div>
+    <div class="hint" id="histEmpty">暂无记录。</div>
+  </section>
+
+  <!-- ============ 设置 ============ -->
+  <section class="page" id="page-set">
+    <div class="card">
+      <h3>ComfyUI</h3>
+      <label class="f"><span class="lb">服务地址</span>
+        <input type="text" id="cfgComfy" placeholder="http://192.168.x.x:8188"></label>
+      <label class="f"><span class="lb">检查点（与本地模型匹配，可留空）</span>
+        <input type="text" id="cfgCkpt" placeholder="留空则用工作流自带"></label>
+      <label class="f"><span class="lb">负向词（可留空用内置）</span>
+        <input type="text" id="cfgNeg" placeholder="留空用内置默认负向词"></label>
+      <label class="f"><span class="lb">自定义工作流 JSON（高级，可留空）</span>
+        <textarea id="cfgWf" placeholder="留空用内置文生图工作流；可粘贴 ComfyUI 导出的 API 格式 JSON"></textarea></label>
+    </div>
+
+    <button class="btn" id="btnSaveCfg">保存设置</button>
+    <div id="cfgMsg"></div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>使用说明</h3>
+      <div class="hint">
+        1. 提示词生成、复制、历史全部在本机完成，无需电脑常驻。<br>
+        2. 出图需电脑 ComfyUI 运行，且启动加 <code>--enable-cors-header</code>。<br>
+        3. 手机与电脑连同一局域网；在「设置」填电脑的 ComfyUI 地址。<br>
+        4. 远程访问请先组网（Tailscale / ZeroTier）再填虚拟局域网地址。
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-p="page-gen"><span class="ic">✎</span>生成</button>
+  <button data-p="page-render"><span class="ic">▣</span>出图</button>
+  <button data-p="page-hist"><span class="ic">☰</span>历史</button>
+  <button data-p="page-set"><span class="ic">⚙</span>设置</button>
+</nav>
+
+<script src="/static/pybridge.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+let PACKS = {}, ORDER = [], curStyle = 'normal', curArch = 'image';
+let lastEn = '', lastZh = '', lastStyle = '', lastArch = '';
+let curJob = null, pollTimer = null, curViewUrl = '';
+
+const CFG_KEY = 'jiumi_cfg';
+const HIST_KEY = 'jiumi_history';
+const DEFAULT_NEGATIVE = "low quality, blurry, watermark, text, deformed, extra limbs, bad anatomy";
+
+// 内置文生图 workflow（与 PC 端 gui/comfy_push.BUILTIN_WORKFLOW 完全一致）
+const BUILTIN_WORKFLOW = {
+  "3": {"class_type": "KSampler", "inputs": {
+    "seed": 0, "steps": 25, "cfg": 7.0, "sampler_name": "dpmpp_2m",
+    "scheduler": "karras", "denoise": 1.0,
+    "model": ["4", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0]}},
+  "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "__CKPT__"}},
+  "5": {"class_type": "EmptyLatentImage", "inputs": {"width": 768, "height": 768, "batch_size": 1}},
+  "6": {"class_type": "CLIPTextEncode", "inputs": {"text": "__POS__", "clip": ["4", 1]}},
+  "7": {"class_type": "CLIPTextEncode", "inputs": {"text": "__NEG__", "clip": ["4", 1]}},
+  "8": {"class_type": "VAEDecode", "inputs": {"samples": ["3", 0], "vae": ["4", 2]}},
+  "9": {"class_type": "SaveImage", "inputs": {"images": ["8", 0]}},
+};
+
+/* ---------- 配置（localStorage） ---------- */
+function cfgGet() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY)) || {}; } catch (e) { return {}; }
+}
+function cfgSet(patch) {
+  const c = cfgGet(); Object.assign(c, patch);
+  localStorage.setItem(CFG_KEY, JSON.stringify(c));
+}
+
+/* ---------- 历史（localStorage） ---------- */
+function histGet() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; }
+}
+function histSave(list) { localStorage.setItem(HIST_KEY, JSON.stringify(list)); }
+function histAdd(it) {
+  const list = histGet();
+  list.unshift(it);
+  if (list.length > 200) list.length = 200;
+  histSave(list);
+}
+function histDel(id) {
+  histSave(histGet().filter(x => x.id !== id));
+}
+
+/* ---------- 导航 ---------- */
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    $(b.dataset.p).classList.add('on');
+    if (b.dataset.p === 'page-hist') loadHistory();
+    if (b.dataset.p === 'page-set') loadConfig();
+  };
+});
+
+/* ---------- 加载风格包（来自 Pyodide）---------- */
+async function loadPacks() {
+  const r = await window.PromptGen.listPacks();
+  PACKS = r.packs; ORDER = r.order || Object.keys(PACKS);
+  const seg = $('styleSeg'); seg.innerHTML = '';
+  ORDER.forEach(k => {
+    const b = document.createElement('button');
+    b.textContent = PACKS[k].name;
+    b.dataset.v = k;
+    b.className = (k === curStyle ? 'on' : '');
+    b.onclick = () => {
+      curStyle = k;
+      [...seg.children].forEach(x => x.classList.toggle('on', x.dataset.v === k));
+      renderFields();
+    };
+    seg.appendChild(b);
+  });
+  renderFields();
+}
+
+function renderFields() {
+  const pack = PACKS[curStyle];
+  if (!pack) return;
+  if (!pack.architectures.includes(curArch)) {
+    curArch = pack.architectures[0];
+    [...$('archSeg').children].forEach(x => x.classList.toggle('on', x.dataset.v === curArch));
+  }
+  const box = $('fields'); box.innerHTML = '';
+  pack.fields.forEach(f => {
+    if (f.video && curArch !== 'h3') return;
+    const lab = document.createElement('label');
+    lab.className = 'f';
+    const lb = document.createElement('span');
+    lb.className = 'lb'; lb.textContent = f.label;
+    lab.appendChild(lb);
+    if (f.kind === 'int') {
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.min = f.min ?? 0; inp.max = f.max ?? 999999;
+      inp.value = f.default ?? 0;
+      inp.dataset.key = f.key;
+      lab.appendChild(inp);
+    } else {
+      const sel = document.createElement('select');
+      (f.options || []).forEach(o => {
+        const op = document.createElement('option');
+        op.value = o.value; op.textContent = o.label;
+        sel.appendChild(op);
+      });
+      sel.dataset.key = f.key;
+      lab.appendChild(sel);
+    }
+    box.appendChild(lab);
+  });
+}
+
+[...$('archSeg').children].forEach(b => {
+  b.onclick = () => {
+    curArch = b.dataset.v;
+    [...$('archSeg').children].forEach(x => x.classList.toggle('on', x === b));
+    renderFields();
+  };
+});
+
+/* ---------- 生成 ---------- */
+$('btnGen').onclick = async () => {
+  if (!window.PromptGen.ready) { await window.PromptGen.whenReady(); }
+  $('genErr').innerHTML = ''; $('genWarn').innerHTML = '';
+  $('btnGen').disabled = true;
+  $('btnGen').innerHTML = '<span class="spin"></span>生成中…';
+  try {
+    const params = {};
+    document.querySelectorAll('#fields [data-key]').forEach(el => {
+      let v = el.value;
+      if (el.type === 'number') v = parseInt(v || '0', 10);
+      params[el.dataset.key] = v;
+    });
+    const res = await window.PromptGen.build(curStyle, curArch, params);
+    lastEn = res.en; lastZh = res.zh; lastStyle = curStyle; lastArch = curArch;
+    $('genWarn').innerHTML = (res.warnings || []).length
+      ? '<div class="warn">⚠ ' + res.warnings.join('<br>⚠ ') + '</div>' : '';
+    $('outZh').textContent = lastZh;
+    $('outEn').textContent = lastEn;
+    $('result').style.display = '';
+    $('renderPrompt').value = lastEn;
+    window.scrollTo({top: $('result').offsetTop - 70, behavior: 'smooth'});
+  } catch (e) {
+    $('genErr').innerHTML = '<div class="err">生成失败：' + e.message + '</div>';
+  } finally {
+    $('btnGen').disabled = false;
+    $('btnGen').textContent = '生成提示词';
+  }
+};
+
+/* ---------- 复制 / 历史 ---------- */
+function copyText(t, tip) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(() => toast(tip));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast(tip); } catch (e) { toast('复制失败，请长按选择'); }
+    document.body.removeChild(ta);
+  }
+}
+function toast(msg) {
+  const d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);'
+    + 'background:#2a3240;color:#e6edf3;padding:9px 16px;border-radius:20px;font-size:13px;z-index:99;';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1600);
+}
+$('btnCopyZh').onclick = () => copyText(lastZh, '中文已复制');
+$('btnCopyEn').onclick = () => copyText(lastEn, '英文已复制');
+$('btnSaveHist').onclick = () => {
+  if (!lastEn) { toast('先生成再存'); return; }
+  histAdd({id: Date.now(), ts: new Date().toLocaleString('zh-CN'),
+    style: lastStyle, arch: lastArch, zh: lastZh, en: lastEn});
+  toast('已存入历史');
+};
+
+/* ---------- 出图（直连 ComfyUI HTTP）---------- */
+function buildWorkflow(prompt, seed, negative, ckpt, wfJson) {
+  let wf;
+  if (wfJson && wfJson.trim()) {
+    try { wf = JSON.parse(wfJson); } catch (e) { throw new Error('自定义 workflow JSON 解析失败：' + e.message); }
+  } else {
+    wf = JSON.parse(JSON.stringify(BUILTIN_WORKFLOW));
+  }
+  const clips = Object.keys(wf).filter(n => wf[n].class_type === 'CLIPTextEncode')
+    .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0));
+  if (clips[0]) wf[clips[0]].inputs.text = prompt || '';
+  if (negative && clips[1]) wf[clips[1]].inputs.text = negative;
+  for (const nid in wf) {
+    const n = wf[nid];
+    if (n.class_type === 'CheckpointLoaderSimple' && ckpt) n.inputs.ckpt_name = ckpt;
+    if (n.class_type === 'KSampler' && seed != null) n.inputs.seed = seed;
+  }
+  return wf;
+}
+function comfyUrl() {
+  const c = cfgGet();
+  return (c.comfy_url || 'http://127.0.0.1:8188').replace(/\/+$/, '');
+}
+async function postJson(url, payload, timeout) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), (timeout || 30) * 1000);
+  try {
+    const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload), signal: ctrl.signal});
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+async function getJson(url, timeout) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), (timeout || 15) * 1000);
+  try {
+    const r = await fetch(url, {signal: ctrl.signal});
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+$('btnRender').onclick = async () => {
+  const p = $('renderPrompt').value.trim();
+  if (!p) { $('renderErr').innerHTML = '<div class="err">请先填写英文提示词</div>'; return; }
+  $('renderErr').innerHTML = '';
+  $('renderBox').style.display = '';
+  $('renderOps').style.display = 'none';
+  $('renderImg').innerHTML = '';
+  $('renderStatus').innerHTML = '<span class="spin"></span>已提交，等待出图…';
+  $('btnRender').disabled = true;
+  const base = comfyUrl();
+  const c = cfgGet();
+  const seed = $('renderSeed').value ? parseInt($('renderSeed').value, 10) : Math.floor(Math.random() * 2 ** 31);
+  const timeout = parseInt($('renderTimeout').value, 10) || 240;
+  const neg = c.comfy_neg || DEFAULT_NEGATIVE;
+  let wf;
+  try {
+    wf = buildWorkflow(p, seed, neg, c.comfy_ckpt || '', c.comfy_wf || '');
+  } catch (e) {
+    $('renderStatus').textContent = '工作流错误';
+    $('renderErr').innerHTML = '<div class="err">' + e.message + '</div>';
+    $('btnRender').disabled = false; return;
+  }
+  try {
+    const client_id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+    const r = await postJson(base + '/prompt', {prompt: wf, client_id}, 30);
+    if (!r.prompt_id) throw new Error('ComfyUI 未返回 prompt_id（检查地址/跨域）');
+    curJob = r.prompt_id;
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => pollJob(base, timeout), 2500);
+    pollJob(base, timeout);
+  } catch (e) {
+    $('renderStatus').textContent = '提交失败';
+    $('renderErr').innerHTML = '<div class="err">提交失败：' + e.message + '<br>若提示 CORS，请确认 ComfyUI 加了 --enable-cors-header</div>';
+    $('btnRender').disabled = false;
+  }
+};
+
+async function pollJob(base, timeout) {
+  if (!curJob) return;
+  const start = pollJob._start || (pollJob._start = Date.now());
+  try {
+    const hist = await getJson(base + '/history/' + curJob, 10);
+    if (hist[curJob]) {
+      const outputs = hist[curJob].outputs || {};
+      for (const nid in outputs) {
+        const imgs = outputs[nid].images;
+        if (imgs && imgs.length) {
+          const im = imgs[0];
+          const vu = base + '/view?filename=' + encodeURIComponent(im.filename)
+            + '&subfolder=' + encodeURIComponent(im.subfolder || '')
+            + '&type=' + encodeURIComponent(im.type || '');
+          clearInterval(pollTimer); pollTimer = null;
+          $('renderStatus').textContent = '出图完成（种子 ' + (hist[curJob].meta && hist[curJob].meta.seed || curJob.slice(0,8)) + '）';
+          $('renderImg').innerHTML = '<img class="preview" src="' + vu + '">';
+          $('renderOps').style.display = 'flex';
+          $('btnRender').disabled = false;
+          curViewUrl = vu;
+          pollJob._start = null;
+          return;
+        }
+      }
+    }
+    const elapsed = Math.round((Date.now() - (pollJob._start || Date.now())) / 1000);
+    $('renderStatus').innerHTML = '<span class="spin"></span>出图中… 已用时 ' + elapsed + ' 秒';
+    if (elapsed > timeout) {
+      clearInterval(pollTimer); pollTimer = null;
+      $('renderStatus').textContent = '出图超时';
+      $('renderErr').innerHTML = '<div class="err">超过 ' + timeout + ' 秒未出图，请检查 ComfyUI 队列/显存</div>';
+      $('btnRender').disabled = false; pollJob._start = null;
+    }
+  } catch (e) {
+    // 轮询中偶发网络抖动忽略，下次继续
+  }
+}
+$('btnDl').onclick = () => { if (curViewUrl) window.open(curViewUrl, '_blank'); };
+$('btnUsePrompt').onclick = () => {
+  lastEn = $('renderPrompt').value;
+  lastZh = lastEn; lastStyle = 'render'; lastArch = 'image';
+  $('outEn').textContent = lastEn; $('outZh').textContent = lastZh;
+  $('result').style.display = '';
+  document.querySelector('nav button[data-p="page-gen"]').click();
+};
+
+/* ---------- 历史 ---------- */
+async function loadHistory() {
+  const list = histGet();
+  const box = $('histList'); box.innerHTML = '';
+  $('histEmpty').style.display = list.length ? 'none' : '';
+  list.forEach(it => {
+    const d = document.createElement('div');
+    d.className = 'hist';
+    d.innerHTML = '<div class="meta"><span>' + (it.ts || '')
+      + '<span class="badge">' + (PACKS[it.style] ? PACKS[it.style].name : (it.style || '自定义')) + '</span>'
+      + (it.arch === 'h3' ? '<span class="badge">视频</span>' : '') + '</span></div>'
+      + '<div class="txt">' + esc(it.zh || it.en || '') + '</div>'
+      + '<div class="ops"><button class="btn sm sec">载入</button>'
+      + '<button class="btn sm sec">复制</button>'
+      + '<button class="btn sm sec">删除</button></div>';
+    const [bLoad, bCopy, bDel] = d.querySelectorAll('.ops button');
+    bLoad.onclick = () => {
+      lastEn = it.en; lastZh = it.zh; lastStyle = it.style; lastArch = it.arch;
+      $('outZh').textContent = lastZh; $('outEn').textContent = lastEn;
+      $('result').style.display = '';
+      $('renderPrompt').value = lastEn;
+      document.querySelector('nav button[data-p="page-gen"]').click();
+      window.scrollTo({top: 0});
+    };
+    bCopy.onclick = () => copyText(it.en || it.zh, '已复制');
+    bDel.onclick = () => { histDel(it.id); loadHistory(); };
+    box.appendChild(d);
+  });
+}
+function esc(s) {
+  return (s || '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+}
+$('btnRefreshHist').onclick = loadHistory;
+$('btnClearHist').onclick = () => {
+  if (!confirm('确定清空全部历史记录？')) return;
+  histSave([]); loadHistory();
+};
+
+/* ---------- 设置 ---------- */
+function loadConfig() {
+  const c = cfgGet();
+  $('cfgComfy').value = c.comfy_url || '';
+  $('cfgCkpt').value = c.comfy_ckpt || '';
+  $('cfgNeg').value = c.comfy_neg || '';
+  $('cfgWf').value = c.comfy_wf || '';
+}
+$('btnSaveCfg').onclick = () => {
+  cfgSet({
+    comfy_url: $('cfgComfy').value.trim(),
+    comfy_ckpt: $('cfgCkpt').value.trim(),
+    comfy_neg: $('cfgNeg').value.trim(),
+    comfy_wf: $('cfgWf').value.trim(),
+  });
+  $('cfgMsg').innerHTML = '<div class="hint" style="color:#3fb6a8">已保存</div>';
+  checkComfy();
+  setTimeout(() => { $('cfgMsg').innerHTML = ''; }, 2000);
+};
+
+/* ---------- ComfyUI 在线状态（直连）---------- */
+async function checkComfy() {
+  const dot = $('comfyDot'), txt = $('comfyTxt');
+  const base = comfyUrl();
+  try {
+    const s = await getJson(base + '/system_stats', 4);
+    const q = await getJson(base + '/queue', 4).catch(() => null);
+    dot.className = 'dot on';
+    const running = q ? (q.queue_running || []).length : -1;
+    const pending = q ? (q.queue_pending || []).length : -1;
+    txt.textContent = 'ComfyUI 在线' + (running >= 0 ? ' · 运行 ' + running + ' / 等待 ' + pending : '');
+  } catch (e) {
+    dot.className = 'dot off';
+    txt.textContent = 'ComfyUI 未连接';
+  }
+}
+
+/* ---------- 启动 ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  (async () => {
+    try {
+      await window.PromptGen.whenReady();
+      await loadPacks();
+      $('boot').classList.add('hide');
+      checkComfy();
+      setInterval(checkComfy, 15000);
+    } catch (e) {
+      $('bootMsg').innerHTML = '引擎加载失败：' + e.message
+        + '<br>请检查网络（首次需从本机 /pyodide 拉取）或重新打开应用。';
+    }
+  })();
+});
+</script>
+</body>
+</html>

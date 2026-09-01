@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JIUMI提示词工作台</string>
+    <string name="title_activity_main">JIUMI提示词工作台</string>
+    <string name="package_name">com.jiumi.promptworkbench</string>
+    <string name="custom_url_scheme">com.jiumi.promptworkbench</string>
+</resources>

@@ -17,6 +17,25 @@ __pycache__/
 .venv/
 venv/
 
+# ---- 离线运行时与二进制资源（不入库：太大且为下载产物/MCP 仅传文本）----
+web/pyodide/
+web/www/pyodide/
+*.wasm
+*.zip
+*.jar
+*.png
+*.jpg
+*.jpeg
+*.ico
+*.webp
+*.ttf
+*.woff
+*.woff2
+*.so
+*.dll
+*.exe
+*.map
+
 # 构建/运行日志
 *.log
 _install_*.log
